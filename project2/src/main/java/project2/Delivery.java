@@ -5,7 +5,7 @@
  * Maimongkol 268
  * Sakolkiat 273
  */
-package Project2_6613118;
+package project2;
 
 import java.io.*;
 import java.util.*;
@@ -31,13 +31,13 @@ class DeliveryThread
 }
 
 public class Delivery {
-    public static void main(String args[]){
+    public static void main(String []args){
         Delivery mainapp = new Delivery();
         mainapp.runSimulation();
     }
     public Scanner readConfig(){
         String config_filename = "config_.txt";
-        String mainPath = "src/main/java/Project2_6613118/";
+        String mainPath = "src/main/java/project2/";
         
         String productInput;
         Scanner productScan = null;

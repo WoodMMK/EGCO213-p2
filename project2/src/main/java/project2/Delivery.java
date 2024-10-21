@@ -16,7 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Delivery {
-    public static void main(String args[]){
+    public static void main(String []args){
         Delivery mainapp = new Delivery();
         mainapp.runSimulation();
     }

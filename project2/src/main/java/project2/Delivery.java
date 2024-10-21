@@ -14,12 +14,14 @@ import java.util.logging.Logger;
 
 
 class Fleet{
-    final protected int max;
-    private int available;
+    final protected int     max;
+    private int             available;
+    private int             load;
     
-    Fleet(int max){
+    Fleet(int max, int load){
         this.max = max;
         available = max;
+        this.load = load;
     }
     synchronized public void Jong(int num){
         if(available-num>=0){
@@ -29,7 +31,6 @@ class Fleet{
         else{
             System.out.println("No Bike left");
         }
-        
     }
     public int getAvailable(){
         return this.available;
@@ -40,13 +41,13 @@ class Fleet{
 }
 
 class BikeFleet extends Fleet{
-    BikeFleet(int num){
-        super(num);
+    BikeFleet(int amount, int load){
+        super(amount, load);
     }
 }
 class TruckFleet extends Fleet{
-    TruckFleet(int num){
-        super(num);
+    TruckFleet(int amount, int load){
+        super(amount, load);
     }
 }
 
@@ -65,7 +66,7 @@ class DeliveryThread
     
 }
 class MyThread extends Thread{
-    Fleet fp;
+    Fleet       fp;
     public MyThread(String name, Fleet fp){
         super(name);
         this.fp = fp;
@@ -116,33 +117,72 @@ public class Delivery {
         
         return InputAL;
     }
+    
+    
     public void runSimulation(){
-        ArrayList<Integer> InputAL = readConfig();
-        ArrayList<SellerThread> SellerAL = new ArrayList<>();
-        ArrayList<DeliveryThread> DeliveryAL = new ArrayList<>();
+        ArrayList<Integer> InputAL           = readConfig();
         
-        for (int i : InputAL){
-            System.out.println(i);
-            
-        }
+        // Set up simulation parameters
+        int days = InputAL.get(0);
         
-//        
-//        
-//        BikeFleet myBikeFleet = new BikeFleet(10);
-//        MyThread MT1 = new MyThread("M1", myBikeFleet);
-//        MyThread MT2 = new MyThread("M2", myBikeFleet);
-//        MyThread MT3 = new MyThread("M3", myBikeFleet);
-//        
-//        try {
-//            MT1.join();
-//            MT2.join();
-//            MT3.join();
-//        } catch (InterruptedException ex) {
-//            Logger.getLogger(Delivery.class.getName()).log(Level.SEVERE, null, ex);
-//        }
+        // Set up attributes
+        BikeFleet BF = new BikeFleet(InputAL.get(1), InputAL.get(2));
+        TruckFleet TF = new TruckFleet(InputAL.get(3), InputAL.get(4));
+        int sellerNumThread = InputAL.get(5);
+        int maxDrop = InputAL.get(6);
+        int numBikeThread = InputAL.get(7);
+        int numTruckThread = InputAL.get(8);
+
+        // Create Arraylist components
+        ArrayList<SellerThread> sellerThreads = createSellerThreads(sellerNumThread, maxDrop);
+        ArrayList<DeliveryShop> deliveryShops = createDeliveryShops(numBikeThread, numTruckThread);
+        ArrayList<DeliveryThread> deliveryThreads = createDeliveryThreads(BF, TF, deliveryShops, numBikeThread, numTruckThread);
         
         
         System.out.println("end simulation");
+    }
+    
+    private ArrayList<SellerThread> createSellerThreads(int sellerNumThread, int maxDrop) {
+        ArrayList<SellerThread> sellerAL = new ArrayList<>();
+        for (int i = 0; i < sellerNumThread; i++) {
+            String name = "Seller_" + i;
+            sellerAL.add(new SellerThread(name, maxDrop));
+        }
+        return sellerAL;
+    }
+
+    private ArrayList<DeliveryShop> createDeliveryShops(int numBikeThread, int numTruckThread) {
+        ArrayList<DeliveryShop> shopAL = new ArrayList<>();
+        
+        // Create bike shops
+        for (int i = 0; i < numBikeThread; i++) {
+            String name = "BikeDelivery_" + i;
+            shopAL.add(new DeliveryShop(name));
+        }
+        
+        // Create truck shops
+        for (int i = 0; i < numTruckThread; i++) {
+            String name = "TruckDelivery_" + i;
+            shopAL.add(new DeliveryShop(name));
+        }
+        
+        return shopAL;
+    }
+
+    private ArrayList<DeliveryThread> createDeliveryThreads(BikeFleet BF, TruckFleet TF, ArrayList<DeliveryShop> shopAL, int numBikeThread, int numTruckThread) {
+        ArrayList<DeliveryThread> deliveryAL = new ArrayList<>();
+        
+        // Create Bike Delivery Threads
+        for (int i = 0; i < numBikeThread; i++) {
+            deliveryAL.add(new DeliveryThread(BF, shopAL.get(i)));
+        }
+        
+        // Create Truck Delivery Threads
+        for (int i = numBikeThread; i < numBikeThread + numTruckThread; i++) {
+            deliveryAL.add(new DeliveryThread(TF, shopAL.get(i)));
+        }
+        
+        return deliveryAL;
     }
     
 }

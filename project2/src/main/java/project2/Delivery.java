@@ -70,7 +70,7 @@ class SellerThread extends Thread
     {
         parcel = (int)(Math.random() * (max_drop - 1 + 1)) + 1;
         System.out.printf("%s  >>  drop %d parcels at %s shop", Thread.currentThread().getName(), parcel, shop.getName());
-        shop.addParcel(parcel);
+        shop.addParcels(parcel);
     }
 }
 
@@ -142,13 +142,13 @@ class DeliveryThread extends Thread
     public void run()
     {
         printDelivery();
-        shop.fleetReset();
     }
     
     public synchronized void printDelivery()
     {
         printPacelsToDelivery();
         printRemainingPacels();
+        shop.fleetResetAvailable();
     }
     
     public void printPacelsToDelivery()
@@ -242,8 +242,8 @@ public class Delivery {
 
         // Create Arraylist components
         ArrayList<SellerThread> sellerThreads = createSellerThreads(sellerNumThread, maxDrop);
-        ArrayList<DeliveryShop> deliveryShops = createDeliveryShops(numBikeThread, numTruckThread);
-        ArrayList<DeliveryThread> deliveryThreads = createDeliveryThreads(BF, TF, deliveryShops, numBikeThread, numTruckThread);
+        ArrayList<DeliveryShop> deliveryShops = createDeliveryShops(numBikeThread, numTruckThread,BF, TF);
+        ArrayList<DeliveryThread> deliveryThreads = createDeliveryThreads(deliveryShops, numBikeThread, numTruckThread);
         
         
         System.out.println("end simulation");
@@ -258,35 +258,35 @@ public class Delivery {
         return sellerAL;
     }
 
-    private ArrayList<DeliveryShop> createDeliveryShops(int numBikeThread, int numTruckThread) {
+    private ArrayList<DeliveryShop> createDeliveryShops(int numBikeThread, int numTruckThread, BikeFleet BF, TruckFleet TF ) {
         ArrayList<DeliveryShop> shopAL = new ArrayList<>();
         
         // Create bike shops
         for (int i = 0; i < numBikeThread; i++) {
             String name = "BikeDelivery_" + i;
-            shopAL.add(new DeliveryShop(name));
+            shopAL.add(new DeliveryShop(name, BF));
         }
         
         // Create truck shops
         for (int i = 0; i < numTruckThread; i++) {
             String name = "TruckDelivery_" + i;
-            shopAL.add(new DeliveryShop(name));
+            shopAL.add(new DeliveryShop(name, TF));
         }
         
         return shopAL;
     }
 
-    private ArrayList<DeliveryThread> createDeliveryThreads(BikeFleet BF, TruckFleet TF, ArrayList<DeliveryShop> shopAL, int numBikeThread, int numTruckThread) {
+    private ArrayList<DeliveryThread> createDeliveryThreads(ArrayList<DeliveryShop> shopAL, int numBikeThread, int numTruckThread) {
         ArrayList<DeliveryThread> deliveryAL = new ArrayList<>();
         
         // Create Bike Delivery Threads
         for (int i = 0; i < numBikeThread; i++) {
-            deliveryAL.add(new DeliveryThread(BF, shopAL.get(i)));
+            deliveryAL.add(new DeliveryThread(shopAL.get(i)));
         }
         
         // Create Truck Delivery Threads
         for (int i = numBikeThread; i < numBikeThread + numTruckThread; i++) {
-            deliveryAL.add(new DeliveryThread(TF, shopAL.get(i)));
+            deliveryAL.add(new DeliveryThread(shopAL.get(i)));
         }
         
         return deliveryAL;

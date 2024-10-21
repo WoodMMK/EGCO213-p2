@@ -83,46 +83,63 @@ public class Delivery {
         Delivery mainapp = new Delivery();
         mainapp.runSimulation();
     }
-    public Scanner readConfig(){
+    public ArrayList<Integer> readConfig(){
         String config_filename = "config_1.txt";
         String mainPath = "src/main/java/project2/";
+        ArrayList<Integer> InputAL = new ArrayList<>();
         
         String productInput;
-        Scanner productScan = null;
+        Scanner configScan = null;
         
-        while (productScan == null) {
+        while (configScan == null) {
             try {
-                productScan = new Scanner(new File(mainPath + config_filename));
+                configScan = new Scanner(new File(mainPath + config_filename));
             } catch (FileNotFoundException e) {
                 System.err.println(e);
                 System.out.println("Enter correct file name: ");
                 config_filename = new Scanner(System.in).nextLine();
             }
         }
-        return productScan;
+        configScan.useDelimiter("[,\\s]+");
+        while(configScan.hasNext()){
+            if (configScan.hasNextInt()) {
+                int number = configScan.nextInt();
+                InputAL.add(number);  
+                System.out.println("add number "+number);
+            }
+            else{
+                // If it's not an integer, skip it
+                configScan.next();
+            }
+        }
+        configScan.close();
+        
+        return InputAL;
     }
     public void runSimulation(){
-        Scanner configScan = readConfig();
+        ArrayList<Integer> InputAL = readConfig();
+        ArrayList<SellerThread> SellerAL = new ArrayList<>();
+        ArrayList<DeliveryThread> DeliveryAL = new ArrayList<>();
         
-        if(configScan != null){
-            while(configScan.hasNextLine()){
-                System.out.println(configScan.nextLine());
-            }
-            configScan.close();
+        for (int i : InputAL){
+            System.out.println(i);
+            
         }
         
-        BikeFleet myBikeFleet = new BikeFleet(10);
-        MyThread MT1 = new MyThread("M1", myBikeFleet);
-        MyThread MT2 = new MyThread("M2", myBikeFleet);
-        MyThread MT3 = new MyThread("M3", myBikeFleet);
-        
-        try {
-            MT1.join();
-            MT2.join();
-            MT3.join();
-        } catch (InterruptedException ex) {
-            Logger.getLogger(Delivery.class.getName()).log(Level.SEVERE, null, ex);
-        }
+//        
+//        
+//        BikeFleet myBikeFleet = new BikeFleet(10);
+//        MyThread MT1 = new MyThread("M1", myBikeFleet);
+//        MyThread MT2 = new MyThread("M2", myBikeFleet);
+//        MyThread MT3 = new MyThread("M3", myBikeFleet);
+//        
+//        try {
+//            MT1.join();
+//            MT2.join();
+//            MT3.join();
+//        } catch (InterruptedException ex) {
+//            Logger.getLogger(Delivery.class.getName()).log(Level.SEVERE, null, ex);
+//        }
         
         
         System.out.println("end simulation");

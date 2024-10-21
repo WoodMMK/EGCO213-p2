@@ -22,7 +22,7 @@ class SellerThread extends Thread
     private int parcel;
     private DeliveryShop shop;
     
-    public SellerThread (String name, int m) { super(name); max_drop = m; }
+    public SellerThread (String name, int m) { super(name); max_drop = m; start();}
 
     public void setDeliveryShop(DeliveryShop ds) { shop = ds; }
 

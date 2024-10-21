@@ -39,6 +39,9 @@ public class Delivery {
         return productScan;
     }
     public void runSimulation(){
+
+        // this is Atom!
+        
         Scanner configScan = readConfig();
         
         if(configScan != null){

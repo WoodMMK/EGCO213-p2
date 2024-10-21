@@ -9,11 +9,26 @@ package Project2_6613118;
 
 import java.io.*;
 import java.util.*;
-import java.util.Random;
-import java.util.concurrent.*;
-import java.util.concurrent.Semaphore;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+class Fleet
+{
+
+}
+
+class SellerThread
+{
+
+}
+
+class DeliveryShop
+{
+
+}
+
+class DeliveryThread
+{
+    
+}
 
 public class Delivery {
     public static void main(String args[]){

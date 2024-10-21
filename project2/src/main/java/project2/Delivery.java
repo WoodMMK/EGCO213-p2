@@ -9,9 +9,6 @@ package project2;
 
 import java.io.*;
 import java.util.*;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.Scanner;
 
 
 class Fleet{
@@ -62,13 +59,14 @@ class SellerThread extends Thread
     private int parcel;
     private DeliveryShop shop;
     
-    public SellerThread (String name, int m) { super(name); max_drop = m; start();}
+    public SellerThread (String name, int m) { super(name); max_drop = m; }
 
     public void setDeliveryShop(DeliveryShop ds) { shop = ds; }
 
     public void run()
     {
         parcel = (int)(Math.random() * (max_drop - 1 + 1)) + 1;
+
         System.out.printf("%s  >>  drop %d parcels at %s shop", Thread.currentThread().getName(), parcel, shop.getName());
         shop.addParcels(parcel);
     }
@@ -135,7 +133,6 @@ class DeliveryThread extends Thread
     {
         super(s.getName());
         shop    = s;   
-        start();
     }
     
     @Override
@@ -172,25 +169,12 @@ class DeliveryThread extends Thread
     }
 }
 
-class MyThread extends Thread{
-    Fleet       fp;
-    public MyThread(String name, Fleet fp){
-        super(name);
-        this.fp = fp;
-        this.start();
-    }
-    public void run(){
-        for(int i = 0; i<3; i++){
-           fp.Jong(2); 
-        }
-    }
-}
-
 public class Delivery {
     public static void main(String []args){
         Delivery mainapp = new Delivery();
         mainapp.runSimulation();
     }
+    
     public ArrayList<Integer> readConfig(){
         String config_filename = "config_1.txt";
         String mainPath = "src/main/java/project2/";
@@ -213,7 +197,6 @@ public class Delivery {
             if (configScan.hasNextInt()) {
                 int number = configScan.nextInt();
                 InputAL.add(number);  
-                System.out.println("add number "+number);
             }
             else{
                 // If it's not an integer, skip it
@@ -225,6 +208,46 @@ public class Delivery {
         return InputAL;
     }
     
+    public void reportInit (ArrayList<Integer> InputAL, ArrayList<SellerThread> sellerThreads, ArrayList<DeliveryShop> deliveryShops) {
+        Thread me = Thread.currentThread();
+        
+        int days = InputAL.get(0);
+        int bikeAmount = InputAL.get(1);
+        int bikeMaxLoad = InputAL.get(2);
+        int truckAmount = InputAL.get(3);
+        int truckMaxLoad = InputAL.get(4);
+        int maxParcelDrop = InputAL.get(6);
+        
+        System.out.printf("%15s  >>  %s Parameters %s \n", me.getName(), "=".repeat(20), "=".repeat(20));
+        System.out.printf("%15s  >>  days of simulation = %d \n", me.getName(), days);
+        System.out.printf("%15s  >>  Bike  Fleet, total bikes  =%4s, max load =%4d parcels, min load =%4d parcels \n", me.getName(), bikeAmount, bikeMaxLoad, bikeMaxLoad / 2);
+        System.out.printf("%15s  >>  Truck Fleet, total trucks =%4s, max load =%4d parcels, min load =%4d parcels \n", me.getName(), truckAmount, truckMaxLoad, truckMaxLoad / 2);
+        
+        
+        System.out.printf("%15s  >>  SellerThreads    = [", me.getName());
+        
+        for (int i = 0; i < sellerThreads.size(); i++) {
+            if (i != sellerThreads.size() - 1) System.out.printf("%s, ", sellerThreads.get(i).getName());
+            else System.out.printf("%s", sellerThreads.get(i).getName());
+        }
+        
+        System.out.printf("] \n");
+        
+        System.out.printf("%15s  >>  max parcel drop  = %d \n", me.getName(), maxParcelDrop);
+        
+        System.out.printf("%15s  >>  DeliveryThreads  = [", me.getName());
+        
+        for (int i = 0; i < deliveryShops.size(); i++) {
+            if (i != deliveryShops.size() - 1) System.out.printf("%s, ", deliveryShops.get(i).getName());
+            else System.out.printf("%s", deliveryShops.get(i).getName());
+        }
+        
+        System.out.printf("] \n");
+    }
+    
+    public void runThreadSimulation (ArrayList<SellerThread> sellerThreads, ArrayList<DeliveryShop> deliveryShops, ArrayList<DeliveryThread> deliveryThreads) {
+        sellerThreads.get(0).start();
+    }
     
     public void runSimulation(){
         ArrayList<Integer> InputAL           = readConfig();
@@ -239,14 +262,17 @@ public class Delivery {
         int maxDrop = InputAL.get(6);
         int numBikeThread = InputAL.get(7);
         int numTruckThread = InputAL.get(8);
-
+        
         // Create Arraylist components
         ArrayList<SellerThread> sellerThreads = createSellerThreads(sellerNumThread, maxDrop);
         ArrayList<DeliveryShop> deliveryShops = createDeliveryShops(numBikeThread, numTruckThread,BF, TF);
         ArrayList<DeliveryThread> deliveryThreads = createDeliveryThreads(deliveryShops, numBikeThread, numTruckThread);
         
+        // report Initialize
+        this.reportInit(InputAL, sellerThreads, deliveryShops);
         
-        System.out.println("end simulation");
+        // use this function to manage all threads
+        this.runThreadSimulation(sellerThreads, deliveryShops, deliveryThreads);
     }
     
     private ArrayList<SellerThread> createSellerThreads(int sellerNumThread, int maxDrop) {

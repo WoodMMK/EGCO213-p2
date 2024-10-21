@@ -36,6 +36,10 @@ class Fleet{
     public int getAvailable(){
         return this.available;
     }
+    public void resetAvailable()
+    {
+        available = max;
+    }
     public void report(){
         System.out.println("There is "+ getAvailable()+ " cars left");
     }
@@ -72,13 +76,102 @@ class SellerThread extends Thread
 
 class DeliveryShop
 {
-
-}
-
-class DeliveryThread
-{
+    private String  name;
+    private int     parcels;
+    private Fleet   fleet;
+    
+    public DeliveryShop(String name, Fleet f)   {this.name = name; this.fleet = f;}
+    
+    public String   getName()                   {return name;}
+    public int      getParcels()                {return parcels;}
+    public void     addParcels(int parcels)     {this.parcels += parcels;}
+    
+    public int calculateParcels()
+    {
+        int parcelsCanSend = 0;
+        
+        if (parcels >= fleet.getAvailable() / 2 && parcels < fleet.getAvailable())
+            parcelsCanSend = parcels;
+        else if (parcels > fleet.getAvailable())
+            parcelsCanSend = parcels - (parcels % fleet.getAvailable());
+        
+        parcels -= parcelsCanSend;
+        
+        return parcelsCanSend;
+    }
+    
+    public int calculateAmountOfVehicles()
+    {
+        int amountOfVehicles = 0;
+        
+        if (parcels > 0)
+            amountOfVehicles = parcels / fleet.getAvailable();
+        
+        return amountOfVehicles;    
+    }
+    
+    public void allocateVehicles(int amount)
+    {
+        fleet.Jong(amount);
+    }
+    
+    public int getVehicleAvailable()
+    {
+        return fleet.getAvailable();
+    }
+    
+    public void fleetResetAvailable()
+    {
+        fleet.resetAvailable();
+    }
     
 }
+
+class DeliveryThread extends Thread
+{
+    DeliveryShop    shop;
+    
+    public DeliveryThread(DeliveryShop s)
+    {
+        super(s.getName());
+        shop    = s;   
+        start();
+    }
+    
+    @Override
+    public void run()
+    {
+        printDelivery();
+        shop.fleetReset();
+    }
+    
+    public synchronized void printDelivery()
+    {
+        printPacelsToDelivery();
+        printRemainingPacels();
+    }
+    
+    public void printPacelsToDelivery()
+    {
+        Thread th = Thread.currentThread();
+        
+        System.out.println(th.getName() + " >>      parcels to deliver " + shop.getParcels());
+    }
+    
+    public void printRemainingPacels()
+    {
+        Thread th = Thread.currentThread();
+        
+        int parcelsCanSend = shop.calculateParcels();
+        
+        int amountOfVehicles = shop.calculateAmountOfVehicles();
+        
+        shop.allocateVehicles(amountOfVehicles);
+        
+        System.out.printf("%s >> deliver %4d parcels by %4d %-8s remaining parcels = %4d, remaining %-8s = %4d", th.getName(), parcelsCanSend, amountOfVehicles, shop.getParcels(), shop.getVehicleAvailable());
+    }
+}
+
 class MyThread extends Thread{
     Fleet       fp;
     public MyThread(String name, Fleet fp){

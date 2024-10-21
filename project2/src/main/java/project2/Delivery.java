@@ -22,10 +22,13 @@ class SellerThread extends Thread
     private int parcel;
     private DeliveryShop shop;
     
-    public SellerThread (String name, int m, DeliveryShop DS) { super(name); max_drop = m; shop = DS; }
+    public SellerThread (String name, int m) { super(name); max_drop = m; }
+
+    public void setDeliveryShop(DeliveryShop ds) { shop = ds; }
 
     public void run()
     {
+
         parcel = (int)(Math.random() * (max_drop - 1 + 1)) + 1;
         System.out.printf("%s  >>  drop %d parcels at %s shop", Thread.currentThread().getName(), parcel, shop.getName());
         shop.setParcel(parcel);

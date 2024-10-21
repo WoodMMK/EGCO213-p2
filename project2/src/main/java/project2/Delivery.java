@@ -12,6 +12,7 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+
 class Fleet{
     final protected int max;
     private int available;
@@ -49,6 +50,20 @@ class TruckFleet extends Fleet{
     }
 }
 
+class SellerThread
+{
+
+}
+
+class DeliveryShop
+{
+
+}
+
+class DeliveryThread
+{
+    
+}
 class MyThread extends Thread{
     Fleet fp;
     public MyThread(String name, Fleet fp){
@@ -61,7 +76,6 @@ class MyThread extends Thread{
            fp.Jong(2); 
         }
     }
-    
 }
 
 public class Delivery {

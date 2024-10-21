@@ -9,8 +9,9 @@ package project2;
 
 import java.io.*;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.Scanner;
 
 
 class Fleet{
@@ -51,9 +52,22 @@ class TruckFleet extends Fleet{
     }
 }
 
-class SellerThread
+class SellerThread extends Thread
 {
+    private int max_drop;
+    private int parcel;
+    private DeliveryShop shop;
+    
+    public SellerThread (String name, int m) { super(name); max_drop = m; start();}
 
+    public void setDeliveryShop(DeliveryShop ds) { shop = ds; }
+
+    public void run()
+    {
+        parcel = (int)(Math.random() * (max_drop - 1 + 1)) + 1;
+        System.out.printf("%s  >>  drop %d parcels at %s shop", Thread.currentThread().getName(), parcel, shop.getName());
+        shop.setParcel(parcel);
+    }
 }
 
 class DeliveryShop

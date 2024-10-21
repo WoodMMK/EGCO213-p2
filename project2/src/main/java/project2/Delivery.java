@@ -31,7 +31,7 @@ class SellerThread extends Thread
 
         parcel = (int)(Math.random() * (max_drop - 1 + 1)) + 1;
         System.out.printf("%s  >>  drop %d parcels at %s shop", Thread.currentThread().getName(), parcel, shop.getName());
-        shop.setParcel(parcel);
+        shop.addParcel(parcel);
     }
 }
 

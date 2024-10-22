@@ -72,6 +72,7 @@ class TruckFleet extends Fleet {
 class SellerThread extends Thread {
 
     public static int flag = 1; // flag status
+    public static boolean startSell = true;
     private int max_drop;
     private int parcel;
     private DeliveryShop shop;
@@ -97,52 +98,40 @@ class SellerThread extends Thread {
         this.deliveryShops = deliveryShops;
     }
 
+    public void reportDay() {
+        System.out.printf("%15s  >>  \n", Thread.currentThread().getName());
+        System.out.printf("%15s  >>  %s \n", Thread.currentThread().getName(), "=".repeat(52));
+        System.out.printf("%15s  >>  Day %d \n", Thread.currentThread().getName(), 1);
+    }
+
+    @Override
     public void run() {
+        Random rand = new Random();
         for (int days = 0; days < 6; days++) {
-            int y = -1;
+            
+            int randNum = rand.nextInt(deliveryShops.size() - 1);
+            setDeliveryShop(deliveryShops.get(randNum));
 
-            try {
-                y = barrier.await();
-            } catch (Exception e) {
+            if (shop == null) {
+                System.err.printf("Error: No shop assigned to thread %s\n", Thread.currentThread().getName());
+                return;
             }
 
-            if (y == 0) {
-                Collections.shuffle(deliveryShops);
+            int parcel = (int) (Math.random() * (max_drop - 1 + 1)) + 1;
 
-                for (int i = 0; i < sellerThreads.size(); i++) {
-                    sellerThreads.get(i).setDeliveryShop(deliveryShops.get(i));
-                }
-            }
+            System.out.printf("%15s  >>  drop%4d parcels at %-15s shop \n", Thread.currentThread().getName(), parcel, shop.getName());
+            shop.addParcels(parcel);
+
 
             try {
                 barrier.await();
+                barrier.await();
+                barrier.await();
             } catch (Exception e) {
+                System.err.println(e);
             }
-
-            while (true) {
-
-                if (SellerThread.flag != 1) {
-                    continue;
-                }
-
-                parcel = (int) (Math.random() * (max_drop - 1 + 1)) + 1;
-
-                System.out.printf("%15s  >>  drop%4d parcels at %-15s shop \n", Thread.currentThread().getName(), parcel, shop.getName());
-
-                shop.addParcels(parcel);
-
-                int x = -1;
-
-                try {
-                    x = barrier.await();
-                } catch (Exception e) {
-                    System.err.println(e);
-                }
-
-                if (x == 0) {
-                    SellerThread.flag = 0; // change flag.
-                }
-            }
+            
+            
         }
     }
 }
@@ -236,37 +225,33 @@ class DeliveryThread extends Thread {
     public void setBarrier(CyclicBarrier barrier) {
         this.barrier = barrier;
     }
-
+    
     @Override
     public void run() {
         for (int days = 0; days < 6; days++) {
-            while (true) {
 
-                if (SellerThread.flag != 0) {
-                    continue;
-                }
+            try {
+                barrier.await();
+            } catch (Exception e) {
+                System.err.println(e);
+            }
 
-                printDelivery();
+            printDelivery();
 
-                try {
-                    barrier.await();
-                } catch (Exception e) {
-                    System.err.println(e);
-                }
+            // >> wait all delivery thread finished print
+            try {
+                barrier.await();
+            } catch (Exception e) {
+                System.err.println(e);
+            }
+            // << wait all delivery thread finished print
 
-                printRemainingPacels();
-
-                int x = -1;
-
-                try {
-                    x = barrier.await();
-                } catch (Exception e) {
-                    System.err.println(e);
-                }
-
-                if (x == 0) {
-                    SellerThread.flag = 1;
-                }
+            printRemainingPacels();
+            
+            try {
+                barrier.await();
+            } catch (Exception e) {
+                System.err.println(e);
             }
         }
     }
@@ -337,11 +322,7 @@ public class Delivery {
     }
 
     public void runThreadSimulation(ArrayList<SellerThread> sellerThreads, ArrayList<DeliveryShop> deliveryShops, ArrayList<DeliveryThread> deliveryThreads) {
-        // print each day!
-        System.out.printf("%15s  >>  \n", Thread.currentThread().getName());
-        System.out.printf("%15s  >>  %s \n", Thread.currentThread().getName(), "=".repeat(52));
-        System.out.printf("%15s  >>  Day %d \n", Thread.currentThread().getName(), 1);
-        // print each day!
+
         for (SellerThread i : sellerThreads) {
             i.setArrayList(sellerThreads, deliveryShops);
             i.start();
@@ -429,15 +410,14 @@ public class Delivery {
         ArrayList<DeliveryShop> deliveryShops = createDeliveryShops(numBikeThread, numTruckThread, BF, TF);
         ArrayList<DeliveryThread> deliveryThreads = createDeliveryThreads(deliveryShops, numBikeThread, numTruckThread);
 
-        CyclicBarrier barrierSeller = new CyclicBarrier(sellerThreads.size());
-        CyclicBarrier barrierDelivery = new CyclicBarrier(deliveryThreads.size());
+        CyclicBarrier barrier = new CyclicBarrier(sellerThreads.size() + deliveryThreads.size());
 
         for (SellerThread i : sellerThreads) {
-            i.setBarrier(barrierSeller);
+            i.setBarrier(barrier);
         }
 
         for (DeliveryThread i : deliveryThreads) {
-            i.setBarrier(barrierDelivery);
+            i.setBarrier(barrier);
         }
 
         // report Initialize

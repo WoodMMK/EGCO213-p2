@@ -99,7 +99,7 @@ class SellerThread extends Thread {
     public void run() {
         Random rand = new Random();
         for (int day = 0; day < Delivery.days; day++) {
-            
+
             // Seller : assign random shop
             int randNum = rand.nextInt(deliveryShops.size());
             setDeliveryShop(deliveryShops.get(randNum));
@@ -107,8 +107,8 @@ class SellerThread extends Thread {
                 System.err.printf("Error: No shop assigned to thread %s\n", Thread.currentThread().getName());
                 return;
             }
-            
-            Delivery.reportDay(day+1, barrier);
+
+            Delivery.reportDay(day + 1, barrier);
 
             int parcel = (int) (Math.random() * (max_drop - 1 + 1)) + 1;
 
@@ -126,11 +126,11 @@ class SellerThread extends Thread {
     }
 }
 
-class DeliveryShop implements Comparable <DeliveryShop> {
+class DeliveryShop implements Comparable<DeliveryShop> {
 
     private String name;
     private int parcels;
-    private int remaningParcels;
+    private int remainingParcels;
     private Fleet fleet;
     private int flag = 1;
     private int received = 0;
@@ -140,7 +140,7 @@ class DeliveryShop implements Comparable <DeliveryShop> {
         this.name = name;
         this.fleet = f;
     }
-    
+
     public int getFlag() {
         return this.flag;
     }
@@ -156,51 +156,75 @@ class DeliveryShop implements Comparable <DeliveryShop> {
     public int getParcels() {
         return parcels;
     }
-    
-    public int getReceived () {
+
+    public int getReceived() {
         return this.received;
     }
-    
-    public int getDelivered () {
+
+    public int getDelivered() {
         return this.delivered;
     }
 
     public void addParcels(int parcels) {
         this.parcels += parcels;
-        
+
         received += parcels; // added received parcels.
     }
-    
-    public double calculateSuccessRate () {
+
+    public double calculateSuccessRate() {
         double successRate = (this.delivered / 1.0) / (this.received / 1.0);
         
         return successRate;
     }
-
+    public int getRemainParcels(){
+        return this.remainingParcels;
+    
+}
     public int calculateParcels() {
         int parcelsCanSend = 0;
+        int temp_remain = parcels % fleet.getLoad();
 
-        if (parcels >= fleet.getLoad() / 2 && parcels < fleet.getLoad()) {
-            parcelsCanSend = parcels;
-        } else if (parcels > fleet.getLoad()) {
-            parcelsCanSend = parcels - (parcels % fleet.getLoad());
+        if (parcels > fleet.getLoad()) {
+            // over max
+            if (temp_remain >= fleet.getLoad() / 2) { 
+                parcelsCanSend = parcels;
+                
+                remainingParcels = 0;
+            }
+            
+            if(temp_remain < fleet.getLoad()/ 2){
+                remainingParcels = temp_remain;
+            
+                parcelsCanSend = parcels - temp_remain;
+            }            
+        } else if (parcels < fleet.getLoad() / 2) {
+            // below min
+            remainingParcels = parcels;
         }
-
-        remaningParcels = parcels - parcelsCanSend; 
+        else {
+            //between max and min
+            parcelsCanSend = parcels;
+        }
         
-        delivered += parcelsCanSend; // adde delivered parcels
+        delivered += parcelsCanSend;
 
         return parcelsCanSend;
     }
 
     public int calculateAmountOfVehicles() {
         int amountOfVehicles = 0;
+        int tempParcels = parcels;
 
         if (parcels > 0) {
-            amountOfVehicles = parcels / fleet.getLoad();
+            amountOfVehicles += tempParcels / fleet.getLoad();
+            tempParcels %= fleet.getLoad();
+            
+            if (tempParcels > fleet.getLoad() / 2) {
+                amountOfVehicles++;
+            }
         }
 
-        parcels = remaningParcels;
+        parcels = remainingParcels;
 
         return amountOfVehicles;
     }
@@ -220,11 +244,15 @@ class DeliveryShop implements Comparable <DeliveryShop> {
     public Fleet getFleet() {
         return fleet;
     }
-    
-    public int compareTo (DeliveryShop other) {
-        if (this.calculateSuccessRate() > other.calculateSuccessRate()) return -1;
-        else if (this.calculateSuccessRate() < other.calculateSuccessRate()) return 1;
-        else return this.getName().compareTo(other.getName());
+
+    public int compareTo(DeliveryShop other) {
+        if (this.calculateSuccessRate() > other.calculateSuccessRate()) {
+            return -1;
+        } else if (this.calculateSuccessRate() < other.calculateSuccessRate()) {
+            return 1;
+        } else {
+            return this.getName().compareTo(other.getName());
+        }
     }
 }
 
@@ -241,12 +269,12 @@ class DeliveryThread extends Thread {
     public void setBarrier(CyclicBarrier barrier) {
         this.barrier = barrier;
     }
-    
+
     @Override
     public void run() {
         for (int day = 0; day < Delivery.days; day++) {
-            Delivery.reportDay(day+1, barrier);
-            
+            Delivery.reportDay(day + 1, barrier);
+
             try {
                 barrier.await();
             } catch (Exception e) {
@@ -264,7 +292,7 @@ class DeliveryThread extends Thread {
             // << wait all delivery thread finished print
 
             printRemainingPacels();
-            
+
             try {
                 barrier.await();
             } catch (Exception e) {
@@ -294,14 +322,15 @@ class DeliveryThread extends Thread {
 
         shop.allocateVehicles(amountOfVehicles);
 
-        System.out.printf("%15s  >>  deliver%4d parcels by%3d %-10s %10s parcels =%4d\n", th.getName(), parcelsCanSend, amountOfVehicles, shop.getFleet().getName(), "remaining", shop.getParcels());
+        System.out.printf("%15s  >>  deliver%4d parcels by%3d %-10s %10s parcels =%4d\n", th.getName(), parcelsCanSend, amountOfVehicles, shop.getFleet().getName(), "remaining", shop.getRemainParcels());
 
     }
 }
 
 public class Delivery {
+
     static int days;
-    
+
     public static void main(String[] args) {
         Delivery mainapp = new Delivery();
         mainapp.runSimulation();
@@ -309,27 +338,27 @@ public class Delivery {
 
     public static void reportDay(int currentDay, CyclicBarrier b) {
         // report day
-            int x=-1;
-            try {
-                x= b.await();
-            } catch (Exception e) {
-                System.err.println(e);
-            }
-            if(x==0){
-                System.out.printf("%15s  >>  \n", Thread.currentThread().getName());
-                System.out.printf("%15s  >>  %s \n", Thread.currentThread().getName(), "=".repeat(52));
-                System.out.printf("%15s  >>  Day %d \n", Thread.currentThread().getName(), currentDay);
-            }
-            try {
-                b.await();
-            } catch (Exception e) {
-                System.err.println(e);
-            }
-            // end report day
+        int x = -1;
+        try {
+            x = b.await();
+        } catch (Exception e) {
+            System.err.println(e);
+        }
+        if (x == 0) {
+            System.out.printf("%15s  >>  \n", Thread.currentThread().getName());
+            System.out.printf("%15s  >>  %s \n", Thread.currentThread().getName(), "=".repeat(52));
+            System.out.printf("%15s  >>  Day %d \n", Thread.currentThread().getName(), currentDay);
+        }
+        try {
+            b.await();
+        } catch (Exception e) {
+            System.err.println(e);
+        }
+        // end report day
     }
-    
+
     public ArrayList<Integer> readConfig() {
-        String config_filename = "config_1.txt";
+        String config_filename = "config_0.txt";
         String mainPath = "src/main/java/project2/";
         ArrayList<Integer> InputAL = new ArrayList<>();
 
@@ -380,17 +409,17 @@ public class Delivery {
         for (DeliveryThread i : deliveryThreads) {
             i.start();
         }
-        
+
 //        try { Thread.sleep(1000); } catch(Exception e) {}
-        
-        for(int i = 0 ; i < days;i++){
+        for (int i = 0; i < days; i++) {
             try {
                 Delivery.reportDay(i + 1, barrier);
-                
+
                 barrier.await();
                 barrier.await();
                 barrier.await();
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
         }
 
         for (SellerThread i : sellerThreads) {
@@ -408,13 +437,13 @@ public class Delivery {
                 System.err.println(e);
             }
         }
-        
+
         System.out.printf("%15s  >>  \n", Thread.currentThread().getName());
         System.out.printf("%15s  >>  %s \n", Thread.currentThread().getName(), "=".repeat(52));
         System.out.printf("%15s  >>  Summary\n", Thread.currentThread().getName());
-        
+
         Collections.sort(deliveryShops);
-    
+
         for (DeliveryShop i : deliveryShops) {
             System.out.printf("%15s  >>  %-18s received = %5d, delivered =%5d, success rate = %.2f\n", Thread.currentThread().getName(), i.getName(), i.getReceived(), i.getDelivered(), i.calculateSuccessRate());
         }
@@ -486,7 +515,7 @@ public class Delivery {
 
         // use this function to manage all threads
         this.runThreadSimulation(sellerThreads, deliveryShops, deliveryThreads);
-        
+
     }
 
     private ArrayList<SellerThread> createSellerThreads(int sellerNumThread, int maxDrop) {

@@ -1,11 +1,11 @@
 /*
  * Members
- * Kunanont 115
- * Chatpum 118
- * Maimongkol 268
- * Sakolkiat 273
- */
-package project2;
+ * 1. Kunanont 	    Seehamat 	    6613115
+ * 2. Chatiphum     Chidjai 	    6613118
+ * 3. Maimongkol    Thokanokwan     6613268
+ * 4. Sakonkiat     Rungsaranon     6613273
+*/
+package Project2_6613268;
 
 import java.io.*;
 import java.util.*;

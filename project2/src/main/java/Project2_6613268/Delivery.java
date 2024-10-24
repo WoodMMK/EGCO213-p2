@@ -25,20 +25,7 @@ class Fleet {
         this.name   = name;
     }
 
-    synchronized public int allocateVehicles(int amountOfVehicles) {
-    int allocated = 0;
-
-    if (available >= amountOfVehicles) {
-        available -= amountOfVehicles;
-        allocated = amountOfVehicles;
-    } else {
-        allocated = available;
-        available = 0;
-    }
-    
-    return allocated;
-}
-
+    // get and set method
     public int getLoad() {
         return load;
     }
@@ -51,16 +38,32 @@ class Fleet {
         return max;
     }
 
+    public String getName() {
+        return this.name;
+    }
+    
     public void resetAvailable() {
         available = max;
     }
 
+    // print method
     public void report() {
         System.out.println("There is " + getAvailable() + " cars left");
     }
+    
+    // calulate method
+    synchronized public int allocateVehicles(int amountOfVehicles) {
+    int allocated = 0;
 
-    public String getName() {
-        return this.name;
+    if (available >= amountOfVehicles) {
+        available -= amountOfVehicles;
+        allocated = amountOfVehicles;
+    } else {
+        allocated = available;
+        available = 0;
+    }
+    
+        return allocated;
     }
 }
 
@@ -80,8 +83,8 @@ class TruckFleet extends Fleet {
 
 class SellerThread extends Thread {
 
-    public static int               flag = 1; // flag status
-    public static boolean           startSell = true;
+    public static int               flag        = 1; // flag status
+    public static boolean           startSell   = true;
     private int                     max_drop;
     private int                     parcel;
     private DeliveryShop            shop;
@@ -94,6 +97,7 @@ class SellerThread extends Thread {
         max_drop = m;
     }
 
+    //set method
     public void setBarrier(CyclicBarrier barrier) {
         this.barrier = barrier;
     }
@@ -107,6 +111,7 @@ class SellerThread extends Thread {
         this.deliveryShops = deliveryShops;
     }
 
+    // thread running method
     @Override
     public void run() {
         Random rand = new Random();
@@ -148,16 +153,9 @@ class DeliveryShop implements Comparable<DeliveryShop> {
         flag        = 1;
     }
 
+    // get and set method
     public int getFlag() {
         return this.flag;
-    }
-
-    public void setFlag(int changeFlag) {
-        this.flag = changeFlag;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public int getParcels() {
@@ -171,29 +169,36 @@ class DeliveryShop implements Comparable<DeliveryShop> {
     public int getDelivered() {
         return this.delivered;
     }
+    
+    public String getName() {
+        return name;
+    }
+    
+    public Fleet getFleet() {
+        return fleet;
+    }
+    
+    public void setFlag(int changeFlag) {
+        this.flag = changeFlag;
+    }
 
+    public int getRemainParcels(){
+        return this.remainingParcels;
+    }
+    
     public void addParcels(int parcels) {
         this.parcels += parcels;
 
         received += parcels; // added received parcels.
     }
     
+    // print method
     public void printSummarySuccessRate()
     {
         System.out.printf("%15s  >>  %-18s received = %5d, delivered =%5d, success rate = %.2f\n", Thread.currentThread().getName(), getName(), getReceived(), getDelivered(), calculateSuccessRate());
     }
-
-    public double calculateSuccessRate() {
-        double successRate = (this.delivered / 1.0) / (this.received / 1.0);
-        
-        return successRate;
-    }
     
-    public int getRemainParcels(){
-        return this.remainingParcels;
-   
-}
-    
+    // calculate method
     public int setLimit(int amountOfVehicles, int parcelsCanSend)
     {
         int limitParcels    =   fleet.getAvailable() * fleet.getLoad();
@@ -206,6 +211,12 @@ class DeliveryShop implements Comparable<DeliveryShop> {
         }
  
         return parcelsCanSend;
+    }
+    
+    public double calculateSuccessRate() {
+        double successRate = (this.delivered / 1.0) / (this.received / 1.0);
+        
+        return successRate;
     }
     
     public int calculateParcels() {
@@ -259,11 +270,7 @@ class DeliveryShop implements Comparable<DeliveryShop> {
 
         return amountOfVehicles;
     }
-
-    public Fleet getFleet() {
-        return fleet;
-    }
-
+    
     @Override
     public int compareTo(DeliveryShop other) {
         if (this.calculateSuccessRate() > other.calculateSuccessRate()) {
@@ -286,10 +293,38 @@ class DeliveryThread extends Thread {
         shop = s;
     }
 
+    //set method
     public void setBarrier(CyclicBarrier barrier) {
         this.barrier = barrier;
     }
+    
+    //print method
+    synchronized public void printDelivery() {
+        printPacelsToDelivery();
+    }
 
+    public void printPacelsToDelivery() {
+        Thread th = Thread.currentThread();
+
+        System.out.printf("%15s  >>      parcels to deliver =%4d \n", th.getName(), shop.getParcels());
+
+        shop.getFleet().resetAvailable();
+    }
+
+    synchronized public void printRemainingPacels() {
+        Thread th = Thread.currentThread();
+
+        int parcelsCanSend              = shop.calculateParcels();
+
+        int amountOfVehicles            = shop.calculateAmountOfVehicles();
+
+        int amountOfAllocateVehicles    = shop.getFleet().allocateVehicles(amountOfVehicles);
+
+        System.out.printf("%15s  >>  deliver%4d parcels by%3d %-10s %10s parcels =%4d\n", th.getName(), parcelsCanSend, amountOfAllocateVehicles, shop.getFleet().getName(), "remaining", shop.getRemainParcels());
+
+    }
+    
+    //thread running method
     @Override
     public void run() {
         for (int day = 0; day < Delivery.days; day++) {
@@ -307,31 +342,6 @@ class DeliveryThread extends Thread {
 
             try {barrier.await();} catch (Exception e) {System.err.println(e);}
         }
-    }
-
-    synchronized public void printDelivery() {
-        printPacelsToDelivery();
-    }
-
-    public void printPacelsToDelivery() {
-        Thread th = Thread.currentThread();
-
-        System.out.printf("%15s  >>      parcels to deliver =%4d \n", th.getName(), shop.getParcels());
-
-        shop.getFleet().resetAvailable();
-    }
-
-    synchronized public void printRemainingPacels() {
-        Thread th = Thread.currentThread();
-
-        int parcelsCanSend      = shop.calculateParcels();
-
-        int amountOfVehicles    = shop.calculateAmountOfVehicles();
-
-        int amountOfAllocateVehicles    = shop.getFleet().allocateVehicles(amountOfVehicles);
-
-        System.out.printf("%15s  >>  deliver%4d parcels by%3d %-10s %10s parcels =%4d\n", th.getName(), parcelsCanSend, amountOfAllocateVehicles, shop.getFleet().getName(), "remaining", shop.getRemainParcels());
-
     }
 }
 

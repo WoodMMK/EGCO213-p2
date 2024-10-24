@@ -1,0 +1,5 @@
+days,                    7
+bike_num_maxload,       3,  10
+truck_num_maxload,      5,  20
+seller_num_maxdrop,      5, 2000
+delivery_bybike_bytruck, 3,   3

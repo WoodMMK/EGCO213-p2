@@ -39,13 +39,16 @@ class Fleet {
     return allocated;
 }
 
-
     public int getLoad() {
         return load;
     }
 
     public int getAvailable() {
         return this.available;
+    }
+    
+    public int getMax() {
+        return max;
     }
 
     public void resetAvailable() {
@@ -188,30 +191,48 @@ class DeliveryShop implements Comparable<DeliveryShop> {
     
     public int getRemainParcels(){
         return this.remainingParcels;
-    
+   
 }
+    
+    public int setLimit(int amountOfVehicles, int parcelsCanSend)
+    {
+        int limitParcels    =   fleet.getAvailable() * fleet.getLoad();
+        
+        if (amountOfVehicles > fleet.getAvailable())
+        {
+            remainingParcels    +=  parcels - limitParcels;
+            parcelsCanSend      =   limitParcels;
+                  
+        }
+ 
+        return parcelsCanSend;
+    }
+    
     public int calculateParcels() {
-        int parcelsCanSend = 0;
-        int temp_remain = parcels % fleet.getLoad();
-
+        int parcelsCanSend  = 0;
+        int temp_remain     = parcels % fleet.getLoad();
+        int halfLoad        = fleet.getLoad() / 2;
+        
         if (parcels > fleet.getLoad()) {
             // over max
-            if (temp_remain >= fleet.getLoad() / 2) { 
-                parcelsCanSend = parcels;
-                
-                remainingParcels = 0;
+            int amountOfVehicles = parcels / fleet.getLoad();
+            
+            if (temp_remain >= halfLoad) 
+            { 
+                parcelsCanSend      = parcels;
+                remainingParcels    = 0;
+                parcelsCanSend      = setLimit(amountOfVehicles + 1, parcelsCanSend);
             }
-            
-            if (temp_remain < fleet.getLoad() / 2){
-                remainingParcels = temp_remain;
-            
-                parcelsCanSend = parcels - temp_remain;
-            }            
-        } else if (parcels < fleet.getLoad() / 2) {
+            else
+            {
+                remainingParcels    = temp_remain;
+                parcelsCanSend      = parcels - temp_remain;
+                parcelsCanSend      = setLimit(amountOfVehicles, parcelsCanSend);
+            }               
+        } else if (parcels < halfLoad) {
             // below min
             remainingParcels = parcels;
-        }
-        else {
+        } else {
             //between max and min
             parcelsCanSend = parcels;
         }

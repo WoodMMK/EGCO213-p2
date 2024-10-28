@@ -119,6 +119,7 @@ class SellerThread extends Thread {
 
             // Seller : assign random shop
             int randNum = rand.nextInt(deliveryShops.size());
+            
             setDeliveryShop(deliveryShops.get(randNum));
             if (shop == null) {
                 System.err.printf("Error: No shop assigned to thread %s\n", Thread.currentThread().getName());
@@ -186,6 +187,10 @@ class DeliveryShop implements Comparable<DeliveryShop> {
         return this.remainingParcels;
     }
     
+    public void setRemainParcels(int n){
+        remainingParcels = n;
+    }
+    
     public void addParcels(int parcels) {
         this.parcels += parcels;
 
@@ -203,18 +208,28 @@ class DeliveryShop implements Comparable<DeliveryShop> {
     {
         int limitParcels    =   fleet.getAvailable() * fleet.getLoad();
         
+//        System.out.println("remaining " + remainingParcels + "   parcels = " + parcels + "   limitParcels = " + limitParcels);
+        
         if (amountOfVehicles > fleet.getAvailable())
         {
-            remainingParcels    +=  parcels - limitParcels;
+            remainingParcels    =  parcels - limitParcels;
             parcelsCanSend      =   limitParcels;
                   
         }
+        
+//        System.out.println("remaining " + remainingParcels + "   parcels = " + parcels + "   limitParcels = " + limitParcels);
  
         return parcelsCanSend;
     }
     
     public double calculateSuccessRate() {
-        double successRate = (this.delivered / 1.0) / (this.received / 1.0);
+        
+        double successRate;
+
+//        if ((this.delivered / 1.0) == 0 && (this.received / 1.0) == 0)
+//            return 0;
+//        else
+        successRate = (this.delivered / 1.0) / (this.received / 1.0);
         
         return successRate;
     }
@@ -237,12 +252,13 @@ class DeliveryShop implements Comparable<DeliveryShop> {
             else
             {
                 remainingParcels    = temp_remain;
-                parcelsCanSend      = parcels - temp_remain;
+                parcelsCanSend      = parcels - temp_remain; 
                 parcelsCanSend      = setLimit(amountOfVehicles, parcelsCanSend);
-            }               
+            }   
+            
         } else if (parcels < halfLoad) {
             // below min
-            remainingParcels = parcels;
+            remainingParcels = parcels;   
         } else {
             //between max and min
             parcelsCanSend = parcels;
@@ -261,7 +277,7 @@ class DeliveryShop implements Comparable<DeliveryShop> {
             amountOfVehicles    += tempParcels / fleet.getLoad();
             tempParcels         %= fleet.getLoad();
             
-            if (tempParcels > fleet.getLoad() / 2) {
+            if (tempParcels >= fleet.getLoad() / 2) {
                 amountOfVehicles++;
             }
         }
@@ -309,6 +325,7 @@ class DeliveryThread extends Thread {
         System.out.printf("%15s  >>      parcels to deliver =%4d \n", th.getName(), shop.getParcels());
 
         shop.getFleet().resetAvailable();
+        shop.setRemainParcels(0);
     }
 
     synchronized public void printRemainingPacels() {
@@ -372,7 +389,7 @@ public class Delivery {
     
     // setting methods 
     public  ArrayList<Integer> readConfig() {
-        String              config_filename = "config_0.txt";
+        String              config_filename = "config_1.txt";
         String              mainPath        = "src/main/java/Project2_6613268/";
         ArrayList<Integer>  InputAL         = new ArrayList<>();
         

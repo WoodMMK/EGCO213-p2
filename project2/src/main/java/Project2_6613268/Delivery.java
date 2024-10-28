@@ -208,8 +208,6 @@ class DeliveryShop implements Comparable<DeliveryShop> {
     {
         int limitParcels    =   fleet.getAvailable() * fleet.getLoad();
         
-//        System.out.println("remaining " + remainingParcels + "   parcels = " + parcels + "   limitParcels = " + limitParcels);
-        
         if (amountOfVehicles > fleet.getAvailable())
         {
             remainingParcels    =  parcels - limitParcels;
@@ -217,8 +215,6 @@ class DeliveryShop implements Comparable<DeliveryShop> {
                   
         }
         
-//        System.out.println("remaining " + remainingParcels + "   parcels = " + parcels + "   limitParcels = " + limitParcels);
- 
         return parcelsCanSend;
     }
     
@@ -226,9 +222,6 @@ class DeliveryShop implements Comparable<DeliveryShop> {
         
         double successRate;
 
-//        if ((this.delivered / 1.0) == 0 && (this.received / 1.0) == 0)
-//            return 0;
-//        else
         successRate = (this.delivered / 1.0) / (this.received / 1.0);
         
         return successRate;
